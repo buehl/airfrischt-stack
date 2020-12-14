@@ -17,10 +17,10 @@ services:
       - backend
 
   static_frontend:
-    image: clairberlin/website:latest
+    image: buehl/airfrischt-website:latest
 
   managair_server:
-    image: clairberlin/managair:latest
+    image: clairberlin/managair:0.1.0
     volumes:
       # Mount the local source code folder for quick iterations.
       # See: https://www.docker.com/blog/containerized-python-development-part-3/
@@ -47,13 +47,10 @@ services:
           - node.role == manager # For bind-mounts on swarm to work
 
   ingestair:
-    image: clairberlin/managair:latest
+    image: clairberlin/managair:0.1.0
     environment:
       - PYTHONDONTWRITEBYTECODE=1
       - PYTHONUNBUFFERED=1
-
-  clairchen_forwarder:
-    image: clairberlin/clairttn:latest
 
   ers_forwarder:
     image: clairberlin/clairttn:latest

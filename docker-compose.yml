@@ -31,7 +31,7 @@ services:
       labels:
         - traefik.enable=true
         - traefik.docker.network=clair_frontend
-        - traefik.http.routers.clair-frontend.rule=Host(`${CLAIR_DOMAIN}`)
+        - traefik.http.routers.clair-frontend.rule=Host(`${CLAIR_DOMAIN}`,`www.${CLAIR_DOMAIN}`,`buehl.${CLAIR_DOMAIN}`)
         - traefik.http.routers.clair-frontend.priority=10
         - traefik.http.services.clair-frontend.loadbalancer.server.port=80
 
@@ -46,8 +46,7 @@ services:
       - backend
     environment:
       - SECRET_KEY_FILE=/run/secrets/managair_secret_key
-      - SENTRY
-      - SENTRY_URL_FILE=/run/secrets/sentry_url
+      - SENTRY=0 # don't use sentry (until now)
       - DEBUG
       - DJANGO_LOG_LEVEL
       - DJANGO_DB_LOG_LEVEL
@@ -62,7 +61,7 @@ services:
       - DB_MIGRATE=${MANAGAIR_DB_MIGRATE-false}
       - COLLECT_STATIC_FILES=${MANAGAIR_COLLECT_STATIC_FILES-false}
       - NODE_FIDELITY=1
-      - DJANGO_ALLOWED_HOSTS=${CLAIR_DOMAIN} localhost 127.0.0.1 [::1]
+      - DJANGO_ALLOWED_HOSTS=${CLAIR_DOMAIN} www.${CLAIR_DOMAIN} buehl.${CLAIR_DOMAIN} localhost 127.0.0.1 [::1]
       - EMAIL_HOST
       - EMAIL_PORT
       - EMAIL_HOST_USER
@@ -73,7 +72,6 @@ services:
       - managair_secret_key
       - sql_password
       - smtp_password
-      - sentry_url
     deploy:
       labels:
         - traefik.enable=true
@@ -114,21 +112,6 @@ services:
       - ingestair_secret_key
       - sql_password
 
-  clairchen_forwarder:
-    image: clairberlin/clairttn:1
-    depends_on:
-      - ingestair
-    networks:
-      - frontend
-      - backend
-    secrets:
-      - clairchen_access_key
-    environment:
-      - CLAIR_MODE=clairchen-forward
-      - CLAIR_TTN_APP_ID=clairberlinproto
-      - CLAIR_TTN_ACCESS_KEY_FILE=/run/secrets/clairchen_access_key
-      - CLAIR_API_ROOT=http://ingestair:8888/ingest/v1/
-
   ers_forwarder:
     image: clairberlin/clairttn:1
     depends_on:
@@ -140,7 +123,7 @@ services:
       - ers_access_key
     environment:
       - CLAIR_MODE=ers-forward
-      - CLAIR_TTN_APP_ID=clair-berlin-ers-co2
+      - CLAIR_TTN_APP_ID=airfrischt_elsys_co2_20201210
       - CLAIR_TTN_ACCESS_KEY_FILE=/run/secrets/ers_access_key
       - CLAIR_API_ROOT=http://ingestair:8888/ingest/v1/
 
@@ -163,10 +146,6 @@ services:
       - backend
 
 secrets:
-  # The access key for the clairberlinproto TTN application.
-  clairchen_access_key:
-    file: secrets/clairchen-access-key.txt
-
   # The access key for the clair-berlin-ers-co2 TTN application.
   ers_access_key:
     file: secrets/ers-access-key.txt
@@ -185,10 +164,6 @@ secrets:
   smtp_password:
     file: secrets/smtp-password.txt
   
-  # The secret URL to report errors to Sentry.io.
-  sentry_url:
-    file: secrets/sentry-url.txt
-
 volumes:
     managair-data:
       external: true
